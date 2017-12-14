@@ -111,5 +111,6 @@ class AbstractModule(metaclass=ABCMeta):
         return to_return
 
     @abstractmethod
+    # Must return a iterable data structure where its element will be pushed to zmq 
     def process(self):
         pass
