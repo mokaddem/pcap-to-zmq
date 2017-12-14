@@ -14,14 +14,21 @@ class Ip_src_extractor(AbstractModule):
         filter_out = []
 
         # get wanted fields from tshark
-        fields = ['ip.src']
+        fields = ['ip.src', 'ip.dst']
         jsonRep = self.fields_from_tshark(fields)
 
-        set_ip = set()
+        ret = []
+        set_ip_src = set()
         # for each packet
         for packet_json in jsonRep:
-            ip = packet_json[fields[0]]
-            if ip not in filter_out:
-                set_ip.add(ip)
+            ip_src = packet_json[fields[0]]
+            ip_dst = packet_json[fields[1]]
 
-        return set_ip
+            if ip_src not in filter_out: # filtering
+                 if ip_src not in set_ip_src: # uniq ip_src
+                    set_ip_src.add(ip_src)
+                    ret.append({ 
+                            'ips_src': ip_src,
+                            'ips_dst': ip_dst,
+                            })
+        return ret

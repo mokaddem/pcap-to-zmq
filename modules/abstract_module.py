@@ -60,7 +60,7 @@ class AbstractModule(metaclass=ABCMeta):
             self.logger.debug('took:', time.time()-t1)
 
             for item in to_publish:
-                self.publish(item)
+                self.publish(json.dumps(item))
                 self.logger.debug(item)
 
 
@@ -84,9 +84,9 @@ class AbstractModule(metaclass=ABCMeta):
 
         # if the cap file is already in memory
         if self.capInRedis:
-            dico = {}
             for json_packet in self.rpcap.get_cap_from_memory(self.redis_key):
                 json_layer = json_packet['layers']
+                dico = {}
                 for f in fields_list:
                     key = f.replace('.', '_') # json key do not contain '.' they are replaced by '_'
                     dico[f] = self.get_field_from_ek(json_layer, f)
