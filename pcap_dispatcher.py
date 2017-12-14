@@ -3,6 +3,7 @@
 
 '''
 This program pops filename from a redis queue, and forward it to python processor modules.
+# Should it read the pcap and put it into memory for faster re-use by other modules?
 '''
 
 import redis
