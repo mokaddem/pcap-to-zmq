@@ -8,7 +8,7 @@ This script:
 
 from abstract_module import AbstractModule
 
-class ip_src_extractor(AbstractModule):
+class Ip_src_extractor(AbstractModule):
     # available function: publish(content), fields_from_tshark(fields)
     def process(self):
         filter_out = []
