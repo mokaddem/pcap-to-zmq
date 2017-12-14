@@ -13,9 +13,9 @@ import redis
 
 
 class AbstractModule(metaclass=ABCMeta):
-    def __init__(self, host, port, db, module_name='name', channelPublish='channel_results'):
+    def __init__(self, host, port, db, module_name='Aname', channelPublish='channel_results'):
         self.module_name = module_name
-        self.module_queue_name = self.__class__.__name__
+        self.module_queue_name = module_name
         self.channelPublish = channelPublish
         self.current_filename = None
 
@@ -36,6 +36,7 @@ class AbstractModule(metaclass=ABCMeta):
 
     def pop_and_process(self):
         self.logger.debug('queue name:', self.module_queue_name)
+        print('queue name:', self.module_queue_name)
         while True:
             filename = self.serv.rpop(self.module_queue_name)
 

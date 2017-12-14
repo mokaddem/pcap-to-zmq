@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.5
 # -*-coding:UTF-8 -*
 
 '''
@@ -25,10 +25,14 @@ class Ip_src_extractor(AbstractModule):
 
             if packet_json['ip.src'] not in filter_out: # filtering
                  if packet_json['ip.src'] not in set_ip_src: # uniq ip_src
-                    set_ip_src.add(ip_src)
+                    set_ip_src.add(packet_json['ip.src'])
                     ret.append({ 
                             'ips_src': packet_json['ip.src'],
                             'ips_dst': packet_json['ip.dst'],
                             'timestamp': packet_json['timestamp']
                             })
         return ret
+
+if __name__ == '__main__':
+    script_name = __file__.split('/')[-1].split('.')[0] # filename without path
+    Ip_src_extractor('localhost', 8888, 0, module_name=script_name)
