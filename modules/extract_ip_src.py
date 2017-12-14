@@ -14,21 +14,21 @@ class Ip_src_extractor(AbstractModule):
         filter_out = []
 
         # get wanted fields from tshark
-        fields = ['ip.src', 'ip.dst']
+        fields = ['ip.src', 'ip.dst', 'timestamp']
+        #jsonRep = self.raw_command('tshark -r {} -T ek -e ip.src -e ip.dst'.format(self.current_filename), fields)
         jsonRep = self.fields_from_tshark(fields)
 
         ret = []
         set_ip_src = set()
         # for each packet
         for packet_json in jsonRep:
-            ip_src = packet_json[fields[0]]
-            ip_dst = packet_json[fields[1]]
 
-            if ip_src not in filter_out: # filtering
-                 if ip_src not in set_ip_src: # uniq ip_src
+            if packet_json['ip.src'] not in filter_out: # filtering
+                 if packet_json['ip.src'] not in set_ip_src: # uniq ip_src
                     set_ip_src.add(ip_src)
                     ret.append({ 
-                            'ips_src': ip_src,
-                            'ips_dst': ip_dst,
+                            'ips_src': packet_json['ip.src'],
+                            'ips_dst': packet_json['ip.dst'],
+                            'timestamp': packet_json['timestamp']
                             })
         return ret

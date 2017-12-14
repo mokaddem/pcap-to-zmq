@@ -69,7 +69,11 @@ class AbstractModule(metaclass=ABCMeta):
         to_publish = { 'module_name': self.module_name, 'content': content }
         self.serv.publish(self.channelPublish, json.dumps(to_publish))
 
-    def get_field_from_ek(self, json_layer, field):
+    def get_field_from_ek(self, json_packet, field):
+        if field == 'timestamp':
+            return json_packet['timestamp']
+
+        json_layer = json_packet['layers']
         fields_list = field.split('.')
         ret = json_layer
         pre_pend = ''
@@ -85,17 +89,18 @@ class AbstractModule(metaclass=ABCMeta):
         # if the cap file is already in memory
         if self.capInRedis:
             for json_packet in self.rpcap.get_cap_from_memory(self.redis_key):
-                json_layer = json_packet['layers']
                 dico = {}
                 for f in fields_list:
                     key = f.replace('.', '_') # json key do not contain '.' they are replaced by '_'
-                    dico[f] = self.get_field_from_ek(json_layer, f)
+                    dico[f] = self.get_field_from_ek(json_packet, f)
                 to_return.append(dico)
 
         else:
             tshark_command = ['tshark',  '-r',  self.current_filename, '-T', 'ek']
             # generate command to send with correct fields filter
             for f in fields_list:
+                if f == 'timestamp': # timestamp is always present in tshark output
+                    continue
                 tshark_command += ['-e', f]
 
             p = Popen(tshark_command, stdin=PIPE, stdout=PIPE) 
@@ -113,6 +118,10 @@ class AbstractModule(metaclass=ABCMeta):
                 dico = {}
                 json_layer = json_resp['layers']
                 for f in fields_list:
+                    if f == 'timestamp':
+                        dico[f] = json_resp[f] # wanted value is in an array, take the 1 element
+                        continue
+
                     key = f.replace('.', '_') # json key do not contain '.' they are replaced by '_'
                     dico[f] = json_layer[key][0] # wanted value is in an array, take the 1 element
                 to_return.append(dico)
@@ -120,9 +129,9 @@ class AbstractModule(metaclass=ABCMeta):
         return to_return
 
     # execute a raw (string) command
-    def raw_command(self, cmd):
-        command = [ c for c in cmd.split()]
-        if 'tshark' not in command:
+    def raw_command(self, cmd, fields_list):
+        tshark_command= [ c for c in cmd.split()]
+        if 'tshark' not in tshark_command:
             self.logger.warning('The command {} does not call tshark'.format(command))
             return ""
 
@@ -140,6 +149,10 @@ class AbstractModule(metaclass=ABCMeta):
             json_resp = json.loads(raw_resp.decode('utf8'))
             dico = {}
             for f in fields_list:
+                if f == 'timestamp':
+                    dico[f] = json_resp[f] # wanted value is in an array, take the 1 element
+                    continue
+
                 json_layer = json_resp['layers']
                 key = f.replace('.', '_') # json key do not contain '.' they are replaced by '_'
                 dico[f] = json_layer[key][0] # wanted value is in an array, take the 1 element
