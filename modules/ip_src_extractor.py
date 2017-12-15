@@ -3,7 +3,7 @@
 
 '''
 This script:
-- extract all ip-source addresses from a pcap and pass them through a filterlist
+- extract all ip-source addresses from pcap and pass them through a filterlist
 '''
 
 from abstract_module import AbstractModule
@@ -27,12 +27,14 @@ class Ip_src_extractor(AbstractModule):
                  if packet_json['ip.src'] not in set_ip_src: # uniq ip_src
                     set_ip_src.add(packet_json['ip.src'])
                     ret.append({ 
-                            'ips_src': packet_json['ip.src'],
-                            'ips_dst': packet_json['ip.dst'],
-                            'timestamp': packet_json['timestamp']
-                            })
+                        'ips_src': packet_json['ip.src'],
+                        'ips_dst': packet_json['ip.dst'],
+                        'timestamp': packet_json['timestamp']
+                    })
+
         return ret
 
 if __name__ == '__main__':
     script_name = __file__.split('/')[-1].split('.')[0] # filename without path
-    Ip_src_extractor('localhost', 8888, 0, module_name=script_name)
+    config_path = '/home/sami/git/pcap-to-zmq/config.json'
+    Ip_src_extractor(config_path, module_name=script_name)

@@ -1,3 +1,11 @@
 {
-    "to_start": ["ip_src_extractor"]
+    "to_start": ["ip_src_extractor", "telnet_data_extractor"],
+    "queue": "cap_queue",
+    "host": "localhost",
+    "port": 8888,
+    "db": 0,
+    "socket": "/tmp/redis.sock",
+    "memory": true,
+    "logPath": "logs/",
+    "sleepTime": 1
 }

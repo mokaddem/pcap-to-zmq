@@ -11,32 +11,45 @@ from subprocess import PIPE, Popen, check_output
 import logging
 import redis
 
+class Struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
 
 class AbstractModule(metaclass=ABCMeta):
-    def __init__(self, host, port, db, module_name='Aname', channelPublish='channel_results'):
+    def __init__(self, config_path, module_name='Aname', channelPublish='channel_results'):
         self.module_name = module_name
         self.module_queue_name = module_name
         self.channelPublish = channelPublish
         self.current_filename = None
 
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            config = Struct(**config)
+
         self.logger = logging.getLogger('logger_'+self.module_queue_name)
+        self.logger.setLevel(logging.INFO)
         handler = logging.FileHandler('log_'+self.module_queue_name, 'a')
         self.logger.addHandler(handler)
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
         self.logger.addHandler(ch)
 
-        self.serv = redis.StrictRedis(
-                host = host,
-                port = port,
-                db = db)
+        self.logger.info('Starting module {}'.format(self.module_name))
+
+        try:
+            self.serv = redis.Redis(unix_socket_path=config.socket)
+        except Exception as e:
+            logger.warning('failed to use unix_socket for redis')
+            self.serv = redis.StrictRedis(
+                    host = config.host,
+                    port = config.port,
+                    db = config.db)
         self.rpcap = Redis_pcap(self.serv)
 
         self.pop_and_process()
 
     def pop_and_process(self):
         self.logger.debug('queue name:', self.module_queue_name)
-        print('queue name:', self.module_queue_name)
         while True:
             filename = self.serv.rpop(self.module_queue_name)
 
@@ -57,8 +70,9 @@ class AbstractModule(metaclass=ABCMeta):
                 self.redis_key = None
                 self.current_filename = filename
             t1 = time.time()
+            self.logger.info('processing {}'.format(self.current_filename))
             to_publish = self.process()
-            self.logger.debug('took:', time.time()-t1)
+            self.logger.info('took: {}sec'.format(str(int(time.time()-t1))))
 
             for item in to_publish:
                 self.publish(json.dumps(item))
@@ -124,7 +138,10 @@ class AbstractModule(metaclass=ABCMeta):
                         continue
 
                     key = f.replace('.', '_') # json key do not contain '.' they are replaced by '_'
-                    dico[f] = json_layer[key][0] # wanted value is in an array, take the 1 element
+                    try:
+                        dico[f] = json_layer[key][0] # wanted value is in an array, take the 1 element
+                    except KeyError: # sometimes fields are not present in the json
+                        pass
                 to_return.append(dico)
 
         return to_return
