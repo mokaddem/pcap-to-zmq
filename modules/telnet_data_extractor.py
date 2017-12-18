@@ -22,9 +22,7 @@ class Telnet_data_extractor(AbstractModule):
         set_telnet_data = set()
         # for each packet
         for packet_json in jsonRep:
-            telnet_data = packet_json.get('telnet.data', None)
-            if telnet_data is None:
-                continue
+            telnet_data = packet_json.get('telnet.data')
 
             if telnet_data not in set_telnet_data: # uniq ip_src
                 set_telnet_data.add(telnet_data)
